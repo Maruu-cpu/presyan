@@ -321,7 +321,6 @@ if (url.pathname === "/api/create-cashier" && req.method === "GET") {
     password: "Cashier123!"
   });
 }
-return send(res, 404, { error: "Not found" });
   return send(res, 404, { error: "Not found" });
 }
 
