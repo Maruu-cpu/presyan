@@ -567,7 +567,7 @@
           <button class="secondary install-btn" id="installAppBtn">Install App</button>
           <button class="secondary" id="logoutBtn">Logout</button>
           <span class="pill" id="drawerStatus">Drawer closed</span>
-          <span class="pill" id="activeUser">Cashier: Owner</span>
+          <span class="pill" id="activeUser">Cashier: </span>
         </div>
       </div>
 
@@ -797,7 +797,7 @@
             <div class="panel-body">
               <form class="form-grid two" id="openDrawerForm">
                 <div class="field"><label for="openingCash">Opening Cash</label><input id="openingCash" type="number" min="0" step="0.01" required></div>
-                <div class="field"><label for="cashierName">Cashier</label><input id="cashierName" value="Owner" required></div>
+                <div class="field"><label for="cashierName">Cashier</label><input id="cashierName" required></div>
                 <button type="submit">Open Drawer</button>
               </form>
               <div id="cashOpenNotice" style="margin-top: 14px;"></div>
@@ -1115,7 +1115,8 @@
       const status = document.getElementById("drawerStatus");
       status.className = `pill${drawer ? " open" : ""}`;
       status.textContent = drawer ? `Drawer open: ${money.format(drawer.openingCash)}` : "Drawer closed";
-      document.getElementById("activeUser").textContent = `Cashier: ${state.cashier}`;
+      document.getElementById("activeUser").textContent =
+`Cashier: ${currentUser ? currentUser.username : state.cashier}`;
     }
 
     function renderDashboard() {
@@ -1416,6 +1417,8 @@
 
     function renderCashDrawer() {
       const drawer = activeDrawer();
+      document.getElementById("cashierName").value =
+currentUser ? currentUser.username : "Owner";
       const currentSales = drawer ? state.sales.filter(sale => sale.drawerId === drawer.id && sale.paymentType === "cash") : [];
       const cashSales = currentSales.reduce((sum, sale) => sum + sale.total, 0);
       const receivablePayments = drawer ? state.receivableLedger.filter(row => row.drawerId === drawer.id).reduce((sum, row) => sum + row.amount, 0) : 0;
