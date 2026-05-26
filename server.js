@@ -240,90 +240,180 @@ async function handleApi(req, res) {
   const user = currentUser(req);
   const url = new URL(req.url, "http://localhost");
 
-  if (url.pathname === "/api/health") return send(res, 200, { ok: true });
+  // HEALTH
+  if (url.pathname === "/api/health") {
+    return send(res, 200, { ok: true });
+  }
 
+  // LOGIN
   if (url.pathname === "/api/login" && req.method === "POST") {
     const body = await readBody(req);
+
     const users = readJson(USERS_FILE);
-    const found = users.find(item => item.username === body.username);
+
+    const found = users.find(
+      item => item.username === body.username
+    );
+
     if (!found || !verifyPassword(String(body.password || ""), found)) {
-      audit(req, null, "login_failed", { username: body.username });
-      return send(res, 401, { error: "Invalid username or password" });
+
+      audit(req, null, "login_failed", {
+        username: body.username
+      });
+
+      return send(res, 401, {
+        error: "Invalid username or password"
+      });
     }
+
     const sessionId = crypto.randomUUID();
-    const safeUser = { id: found.id, username: found.username, role: found.role };
-    sessions.set(sessionId, { user: safeUser, expiresAt: Date.now() + SESSION_TTL_MS });
+
+    const safeUser = {
+      id: found.id,
+      username: found.username,
+      role: found.role
+    };
+
+    sessions.set(sessionId, {
+      user: safeUser,
+      expiresAt: Date.now() + SESSION_TTL_MS
+    });
+
     audit(req, safeUser, "login");
-    return send(res, 200, { user: safeUser }, { "Set-Cookie": makeCookie(sessionId) });
+
+    return send(
+      res,
+      200,
+      { user: safeUser },
+      { "Set-Cookie": makeCookie(sessionId) }
+    );
   }
 
+  // LOGOUT
   if (url.pathname === "/api/logout" && req.method === "POST") {
+
     audit(req, user, "logout");
-    return send(res, 200, { ok: true }, { "Set-Cookie": clearCookie() });
+
+    return send(
+      res,
+      200,
+      { ok: true },
+      { "Set-Cookie": clearCookie() }
+    );
   }
 
-  if (!user) return send(res, 401, { error: "Authentication required" });
+  // CREATE CASHIER
+  if (url.pathname === "/api/create-cashier" && req.method === "GET") {
 
-  if (url.pathname === "/api/me") return send(res, 200, { user });
+    const users = readJson(USERS_FILE);
 
+    // Remove old cashier if exists
+    const existingIndex = users.findIndex(
+      u => u.username === "cashier"
+    );
+
+    if (existingIndex !== -1) {
+      users.splice(existingIndex, 1);
+    }
+
+    const credentials = hashPassword("Cashier123!");
+
+    const cashier = {
+      id: crypto.randomUUID(),
+      username: "cashier",
+      role: "cashier",
+      salt: credentials.salt,
+      hash: credentials.hash,
+      createdAt: new Date().toISOString()
+    };
+
+    users.push(cashier);
+
+    writeJsonAtomic(USERS_FILE, users);
+
+    return send(res, 200, {
+      ok: true,
+      username: "cashier",
+      password: "Cashier123!"
+    });
+  }
+
+  // REQUIRE AUTHENTICATION
+  if (!user) {
+    return send(res, 401, {
+      error: "Authentication required"
+    });
+  }
+
+  // CURRENT USER
+  if (url.pathname === "/api/me") {
+    return send(res, 200, { user });
+  }
+
+  // GET STATE
   if (url.pathname === "/api/state" && req.method === "GET") {
     return send(res, 200, readJson(DATA_FILE));
   }
 
+  // SAVE STATE
   if (url.pathname === "/api/state" && req.method === "PUT") {
-    if (!["admin", "manager", "cashier"].includes(user.role)) return send(res, 403, { error: "Forbidden" });
-    const body = await readBody(req);
-    if (!body || typeof body !== "object" || !Array.isArray(body.products) || !Array.isArray(body.accounts)) {
-      return send(res, 400, { error: "Invalid POS data" });
+
+    if (!["admin", "manager", "cashier"].includes(user.role)) {
+      return send(res, 403, {
+        error: "Forbidden"
+      });
     }
+
+    const body = await readBody(req);
+
+    if (
+      !body ||
+      typeof body !== "object" ||
+      !Array.isArray(body.products) ||
+      !Array.isArray(body.accounts)
+    ) {
+      return send(res, 400, {
+        error: "Invalid POS data"
+      });
+    }
+
     backupData();
+
     writeJsonAtomic(DATA_FILE, body);
+
     audit(req, user, "state_saved", {
       products: body.products.length,
-      sales: Array.isArray(body.sales) ? body.sales.length : 0,
-      journalEntries: Array.isArray(body.journalEntries) ? body.journalEntries.length : 0
+      sales: Array.isArray(body.sales)
+        ? body.sales.length
+        : 0,
+      journalEntries: Array.isArray(body.journalEntries)
+        ? body.journalEntries.length
+        : 0
     });
+
     return send(res, 200, { ok: true });
   }
 
+  // BACKUP
   if (url.pathname === "/api/backup" && req.method === "POST") {
-    if (user.role !== "admin") return send(res, 403, { error: "Forbidden" });
+
+    if (user.role !== "admin") {
+      return send(res, 403, {
+        error: "Forbidden"
+      });
+    }
+
     backupData();
+
     audit(req, user, "backup_created");
+
     return send(res, 200, { ok: true });
   }
-if (url.pathname === "/api/create-cashier" && req.method === "GET") {
 
-  const users = readJson(USERS_FILE);
-
-  const existingIndex = users.findIndex(u => u.username === "cashier");
-
-if (existingIndex !== -1) {
-  users.splice(existingIndex, 1);
-}
-
-  const credentials = hashPassword("Cashier123!");
-
-  const cashier = {
-    id: crypto.randomUUID(),
-    username: "cashier",
-    role: "cashier",
-    salt: credentials.salt,
-    hash: credentials.hash,
-    createdAt: new Date().toISOString()
-  };
-
-  users.push(cashier);
-
-  writeJsonAtomic(USERS_FILE, users);
-
-  return send(res, 200, {
-    ok: true,
-    username: "cashier",
-    password: "Cashier123!"
+  // NOT FOUND
+  return send(res, 404, {
+    error: "Not found"
   });
-}
-  return send(res, 404, { error: "Not found" });
 }
 
 initFiles();
