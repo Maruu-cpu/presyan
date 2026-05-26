@@ -293,9 +293,6 @@ async function handleApi(req, res) {
     return send(res, 200, { ok: true });
   }
 if (url.pathname === "/api/create-cashier" && req.method === "GET") {
-  if (!user || user.role !== "admin") {
-    return send(res, 403, { error: "Forbidden" });
-  }
 
   const users = readJson(USERS_FILE);
 
@@ -324,7 +321,6 @@ if (url.pathname === "/api/create-cashier" && req.method === "GET") {
     password: "Cashier123!"
   });
 }
-
 return send(res, 404, { error: "Not found" });
   return send(res, 404, { error: "Not found" });
 }
