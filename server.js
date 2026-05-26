@@ -292,7 +292,40 @@ async function handleApi(req, res) {
     audit(req, user, "backup_created");
     return send(res, 200, { ok: true });
   }
+if (url.pathname === "/api/create-cashier" && req.method === "GET") {
+  if (!user || user.role !== "admin") {
+    return send(res, 403, { error: "Forbidden" });
+  }
 
+  const users = readJson(USERS_FILE);
+
+  if (users.some(u => u.username === "cashier")) {
+    return send(res, 400, { error: "Cashier already exists" });
+  }
+
+  const credentials = hashPassword("Cashier123!");
+
+  const cashier = {
+    id: crypto.randomUUID(),
+    username: "cashier",
+    role: "cashier",
+    salt: credentials.salt,
+    hash: credentials.hash,
+    createdAt: new Date().toISOString()
+  };
+
+  users.push(cashier);
+
+  writeJsonAtomic(USERS_FILE, users);
+
+  return send(res, 200, {
+    ok: true,
+    username: "cashier",
+    password: "Cashier123!"
+  });
+}
+
+return send(res, 404, { error: "Not found" });
   return send(res, 404, { error: "Not found" });
 }
 
