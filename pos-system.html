@@ -541,13 +541,19 @@
         <p>Sales, stock, receivables, and cash drawer</p>
       </div>
       <nav class="nav" aria-label="Main navigation">
-        <button class="active" data-section="dashboard" data-title="Dashboard"><span class="icon">#</span>Dashboard</button>
-        <button data-section="sales" data-title="Sales"><span class="icon">$</span>Sales</button>
-        <button data-section="inventory" data-title="Inventory"><span class="icon">+</span>Inventory</button>
-        <button data-section="receivables" data-title="Receivables"><span class="icon">R</span>Receivables</button>
-        <button data-section="reports" data-title="Income Reports"><span class="icon">%</span>Income Reports</button>
-        <button data-section="accounting" data-title="Accounting"><span class="icon">A</span>Accounting</button>
-        <button data-section="cash" data-title="Cash Drawer"><span class="icon">=</span>Cash Drawer</button>
+       <button id="dashboardMenu" class="active" data-section="dashboard" data-title="Dashboard"><span class="icon">#</span>Dashboard</button>
+
+<button id="salesMenu" data-section="sales" data-title="Sales"><span class="icon">$</span>Sales</button>
+
+<button id="inventoryMenu" data-section="inventory" data-title="Inventory"><span class="icon">+</span>Inventory</button>
+
+<button id="receivablesMenu" data-section="receivables" data-title="Receivables"><span class="icon">R</span>Receivables</button>
+
+<button id="reportsMenu" data-section="reports" data-title="Income Reports"><span class="icon">%</span>Income Reports</button>
+
+<button id="accountingMenu" data-section="accounting" data-title="Accounting"><span class="icon">A</span>Accounting</button>
+
+<button id="cashMenu" data-section="cash" data-title="Cash Drawer"><span class="icon">=</span>Cash Drawer</button>
       </nav>
     </aside>
 
@@ -1926,6 +1932,17 @@
           })
         });
         currentUser = result.user;
+if (currentUser.role === "cashier") {
+
+  document.getElementById("dashboardMenu").style.display = "none";
+
+  document.getElementById("inventoryMenu").style.display = "none";
+
+  document.getElementById("reportsMenu").style.display = "none";
+
+  document.getElementById("accountingMenu").style.display = "none";
+
+}
         state.cashier = currentUser.username;
         await loadServerState();
         showApp();
