@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#172330">
+  <meta name="application-name" content="POS Control">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="POS Control">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="pos-icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="pos-icon.svg">
+  <title>POS Inventory and Cash Drawer</title>
+  <style>
+    :root {
+      --bg: #f5f7f9;
+      --surface: #ffffff;
+      --surface-2: #eef3f7;
+      --line: #d9e1e8;
+      --text: #18232e;
+      --muted: #607080;
+      --primary: #0f766e;
+      --primary-strong: #0b5f59;
+      --primary-soft: #d9f2ef;
+      --warning: #b45309;
+      --danger: #b42318;
+      --success: #16703c;
+      --shadow: 0 14px 34px rgba(31, 45, 61, 0.08);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      min-height: 38px;
+      padding: 0 12px;
+      background: var(--primary);
+      color: white;
+      font-weight: 650;
+    }
+
+    button:hover {
+      background: var(--primary-strong);
+    }
+
+    button.secondary {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    button.secondary:hover {
+      background: #e2eaf0;
+    }
+
+    button.danger {
+      background: var(--danger);
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 9px 10px;
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      background: #f8fafc;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 236px 1fr;
+    }
+
+    .app.locked {
+      display: none;
+    }
+
+    .login-screen {
+      min-height: 100vh;
+      display: none;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .login-screen.active {
+      display: grid;
+    }
+
+    .login-panel {
+      width: min(420px, 100%);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .login-panel h1 {
+      margin: 0;
+      font-size: 1.45rem;
+    }
+
+    .login-panel p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .sidebar {
+      background: #172330;
+      color: white;
+      padding: 22px 16px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+    }
+
+    .brand {
+      margin-bottom: 22px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 5px 0 0;
+      color: #aebdca;
+      font-size: 0.86rem;
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav button {
+      width: 100%;
+      justify-content: flex-start;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: transparent;
+      color: #d8e2ec;
+      border: 1px solid transparent;
+      font-weight: 650;
+    }
+
+    .nav button.active,
+    .nav button:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.14);
+      color: white;
+    }
+
+    .icon {
+      width: 20px;
+      text-align: center;
+      flex: 0 0 20px;
+    }
+
+    .main {
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .topbar h2 {
+      margin: 0;
+      font-size: 1.45rem;
+    }
+
+    .status {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 0.84rem;
+      font-weight: 650;
+    }
+
+    .pill.open {
+      color: var(--success);
+      background: #e9f8ef;
+      border-color: #bce4ca;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .grid.two {
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 0.6fr);
+    }
+
+    .grid.three {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfcfd;
+    }
+
+    .panel-head h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .panel-body {
+      padding: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+
+    .form-grid.two {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .metric {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 15px;
+      min-height: 92px;
+      display: grid;
+      align-content: space-between;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .metric strong {
+      font-size: 1.55rem;
+      margin-top: 8px;
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: grid;
+      gap: 14px;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+      gap: 10px;
+      max-height: 540px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .product {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: var(--surface);
+      display: grid;
+      gap: 8px;
+      min-height: 132px;
+      text-align: left;
+      color: var(--text);
+    }
+
+    .product:hover {
+      border-color: var(--primary);
+      background: #f7fbfa;
+    }
+
+    .product strong {
+      font-size: 0.98rem;
+    }
+
+    .product small {
+      color: var(--muted);
+    }
+
+    .stock-low {
+      color: var(--danger);
+      font-weight: 700;
+    }
+
+    .cart-list {
+      display: grid;
+      gap: 8px;
+      max-height: 322px;
+      overflow: auto;
+    }
+
+    .cart-item {
+      display: grid;
+      grid-template-columns: 1fr 76px 86px 32px;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+    }
+
+    .cart-item button {
+      min-height: 32px;
+      padding: 0;
+    }
+
+    .totals {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .total-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .total-line.grand {
+      font-size: 1.25rem;
+      font-weight: 750;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .toolbar .field {
+      min-width: 180px;
+    }
+
+    .empty {
+      color: var(--muted);
+      background: #f8fafc;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+      text-align: center;
+    }
+
+    .right {
+      text-align: right;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .install-btn {
+      display: none;
+    }
+
+    .install-btn.ready {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .notice {
+      border-left: 4px solid var(--primary);
+      background: var(--primary-soft);
+      padding: 12px;
+      border-radius: 6px;
+      color: #164e48;
+    }
+
+    @media (max-width: 1020px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+
+      .nav {
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      }
+
+      .grid.two,
+      .grid.three,
+      .form-grid,
+      .form-grid.two {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .main {
+        padding: 14px;
+      }
+
+      .cart-item {
+        grid-template-columns: 1fr;
+      }
+
+      th:nth-child(n+4),
+      td:nth-child(n+4) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="login-screen" id="loginScreen">
+    <form class="login-panel" id="loginForm">
+      <div>
+        <h1>POS Control</h1>
+        <p>Sign in to access live store records.</p>
+      </div>
+      <div class="field">
+        <label for="loginUsername">Username</label>
+        <input id="loginUsername" autocomplete="username" required>
+      </div>
+      <div class="field">
+        <label for="loginPassword">Password</label>
+        <input id="loginPassword" type="password" autocomplete="current-password" required>
+      </div>
+      <button type="submit">Sign In</button>
+      <div class="muted" id="loginMessage"></div>
+    </form>
+  </section>
+
+  <div class="app locked" id="appShell">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>POS Control</h1>
+        <p>Sales, stock, receivables, and cash drawer</p>
+      </div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="active" data-section="dashboard" data-title="Dashboard"><span class="icon">#</span>Dashboard</button>
+        <button data-section="sales" data-title="Sales"><span class="icon">$</span>Sales</button>
+        <button data-section="inventory" data-title="Inventory"><span class="icon">+</span>Inventory</button>
+        <button data-section="receivables" data-title="Receivables"><span class="icon">R</span>Receivables</button>
+        <button data-section="reports" data-title="Income Reports"><span class="icon">%</span>Income Reports</button>
+        <button data-section="accounting" data-title="Accounting"><span class="icon">A</span>Accounting</button>
+        <button data-section="cash" data-title="Cash Drawer"><span class="icon">=</span>Cash Drawer</button>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h2 id="pageTitle">Dashboard</h2>
+          <div class="muted" id="todayText"></div>
+        </div>
+        <div class="status">
+          <button class="secondary install-btn" id="installAppBtn">Install App</button>
+          <button class="secondary" id="logoutBtn">Logout</button>
+          <span class="pill" id="drawerStatus">Drawer closed</span>
+          <span class="pill" id="activeUser">Cashier: Owner</span>
+        </div>
+      </div>
+
+      <section class="section active" id="dashboard">
+        <div class="grid three">
+          <div class="metric"><span>Sales Today</span><strong id="metricSales">₱0.00</strong></div>
+          <div class="metric"><span>Receivables Balance</span><strong id="metricReceivables">₱0.00</strong></div>
+          <div class="metric"><span>Low Stock Items</span><strong id="metricLowStock">0</strong></div>
+        </div>
+        <div class="grid two">
+          <div class="panel">
+            <div class="panel-head"><h3>Recent Sales</h3><button class="secondary" data-section-link="sales">New Sale</button></div>
+            <div class="panel-body" id="recentSales"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Inventory Alerts</h3><button class="secondary" data-section-link="inventory">Manage Stock</button></div>
+            <div class="panel-body" id="inventoryAlerts"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="sales">
+        <div class="grid two">
+          <div class="panel">
+            <div class="panel-head">
+              <h3>Product Catalog</h3>
+              <input id="productSearch" placeholder="Search product or SKU" style="max-width: 260px;">
+            </div>
+            <div class="panel-body">
+              <div class="product-grid" id="productGrid"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Current Sale</h3><button class="secondary" id="clearCartBtn">Clear</button></div>
+            <div class="panel-body">
+              <div class="cart-list" id="cartList"></div>
+              <div class="totals">
+                <div class="field">
+                  <label for="customerName">Customer</label>
+                  <input id="customerName" placeholder="Walk-in customer">
+                </div>
+                <div class="form-grid two">
+                  <div class="field">
+                    <label for="paymentType">Payment Type</label>
+                    <select id="paymentType">
+                      <option value="cash">Cash</option>
+                      <option value="receivable">Receivable / Credit</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="amountTendered">Amount Tendered</label>
+                    <input id="amountTendered" type="number" min="0" step="0.01" value="0">
+                  </div>
+                </div>
+                <div class="total-line"><span>Subtotal</span><strong id="cartSubtotal">₱0.00</strong></div>
+                <div class="total-line"><span>Change</span><strong id="cartChange">₱0.00</strong></div>
+                <div class="total-line grand"><span>Total</span><strong id="cartTotal">₱0.00</strong></div>
+                <button id="completeSaleBtn">Complete Sale</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="inventory">
+        <div class="panel">
+          <div class="panel-head"><h3>Add or Update Product</h3></div>
+          <div class="panel-body">
+            <form class="form-grid" id="productForm">
+              <input type="hidden" id="productId">
+              <div class="field"><label for="sku">SKU</label><input id="sku" required></div>
+              <div class="field"><label for="productName">Product Name</label><input id="productName" required></div>
+              <div class="field"><label for="category">Category</label><input id="category" required></div>
+              <div class="field"><label for="unitPrice">Unit Price</label><input id="unitPrice" type="number" min="0" step="0.01" required></div>
+              <div class="field"><label for="costPrice">Cost</label><input id="costPrice" type="number" min="0" step="0.01" required></div>
+              <div class="field"><label for="stockQty">Opening Stock</label><input id="stockQty" type="number" min="0" step="1" required></div>
+              <div class="field"><label for="reorderLevel">Reorder Level</label><input id="reorderLevel" type="number" min="0" step="1" required></div>
+              <button type="submit">Save Product</button>
+            </form>
+          </div>
+        </div>
+        <div class="grid two">
+          <div class="panel">
+            <div class="panel-head"><h3>Inventory List</h3></div>
+            <div class="panel-body" id="inventoryTable"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Stock In / Out</h3></div>
+            <div class="panel-body">
+              <form class="form-grid two" id="stockForm">
+                <div class="field"><label for="stockProduct">Product</label><select id="stockProduct" required></select></div>
+                <div class="field"><label for="stockType">Movement</label><select id="stockType"><option value="in">Stock In</option><option value="out">Stock Out</option></select></div>
+                <div class="field"><label for="stockAmount">Quantity</label><input id="stockAmount" type="number" min="1" step="1" required></div>
+                <div class="field"><label for="stockNote">Reference / Note</label><input id="stockNote" placeholder="Supplier, adjustment, damage"></div>
+                <button type="submit">Record Movement</button>
+              </form>
+              <div style="height: 14px;"></div>
+              <div id="stockLedger"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="receivables">
+        <div class="grid two">
+          <div class="panel">
+            <div class="panel-head"><h3>Receivable Accounts</h3></div>
+            <div class="panel-body" id="receivableTable"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Record Payment</h3></div>
+            <div class="panel-body">
+              <form class="form-grid two" id="paymentForm">
+                <div class="field"><label for="receivableAccount">Account</label><select id="receivableAccount" required></select></div>
+                <div class="field"><label for="receivablePayment">Amount Paid</label><input id="receivablePayment" type="number" min="0" step="0.01" required></div>
+                <div class="field"><label for="paymentNote">Note</label><input id="paymentNote" placeholder="OR number, bank ref"></div>
+                <button type="submit">Apply Payment</button>
+              </form>
+              <div style="height: 14px;"></div>
+              <div id="receivableLedger"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="reports">
+        <div class="panel">
+          <div class="panel-head"><h3>Income Range</h3></div>
+          <div class="panel-body">
+            <div class="toolbar">
+              <div class="field">
+                <label for="reportPreset">Range</label>
+                <select id="reportPreset">
+                  <option value="day">Day</option>
+                  <option value="month">Month</option>
+                  <option value="year">Year</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="reportStart">Start</label>
+                <input id="reportStart" type="date">
+              </div>
+              <div class="field">
+                <label for="reportEnd">End</label>
+                <input id="reportEnd" type="date">
+              </div>
+              <button id="runReportBtn">Generate Report</button>
+            </div>
+          </div>
+        </div>
+        <div class="grid three">
+          <div class="metric"><span>Gross Sales</span><strong id="reportGross">₱0.00</strong></div>
+          <div class="metric"><span>Cost of Goods</span><strong id="reportCost">₱0.00</strong></div>
+          <div class="metric"><span>Net Income</span><strong id="reportNet">₱0.00</strong></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Sales Included</h3></div>
+          <div class="panel-body" id="reportTable"></div>
+        </div>
+      </section>
+
+      <section class="section" id="accounting">
+        <div class="grid three">
+          <div class="metric"><span>Total Assets</span><strong id="acctAssets">₱0.00</strong></div>
+          <div class="metric"><span>Total Liabilities</span><strong id="acctLiabilities">₱0.00</strong></div>
+          <div class="metric"><span>Net Income</span><strong id="acctNetIncome">₱0.00</strong></div>
+        </div>
+        <div class="grid two">
+          <div class="panel">
+            <div class="panel-head"><h3>Journal Entry</h3></div>
+            <div class="panel-body">
+              <form id="journalForm" class="grid">
+                <div class="form-grid two">
+                  <div class="field"><label for="journalDate">Date</label><input id="journalDate" type="date" required></div>
+                  <div class="field"><label for="journalMemo">Memo</label><input id="journalMemo" placeholder="Owner investment, rent, utilities, supplier payable" required></div>
+                </div>
+                <div id="journalLines"></div>
+                <div class="actions">
+                  <button type="button" class="secondary" id="addJournalLineBtn">Add Line</button>
+                  <button type="submit">Post Journal Entry</button>
+                </div>
+              </form>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Chart of Accounts</h3></div>
+            <div class="panel-body" id="chartAccounts"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Accounting Reports</h3>
+          </div>
+          <div class="panel-body">
+            <div class="toolbar">
+              <div class="field"><label for="accountingStart">Start</label><input id="accountingStart" type="date"></div>
+              <div class="field"><label for="accountingEnd">End / As Of</label><input id="accountingEnd" type="date"></div>
+              <button id="runAccountingBtn">Refresh</button>
+            </div>
+          </div>
+        </div>
+        <div class="grid two">
+          <div class="panel">
+            <div class="panel-head"><h3>Trial Balance</h3></div>
+            <div class="panel-body" id="trialBalance"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>Income Statement</h3></div>
+            <div class="panel-body" id="incomeStatement"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Balance Sheet</h3></div>
+          <div class="panel-body" id="balanceSheet"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Journal Entries</h3></div>
+          <div class="panel-body" id="journalEntryList"></div>
+        </div>
+      </section>
+
+      <section class="section" id="cash">
+        <div class="grid two">
+          <div class="panel">
+            <div class="panel-head"><h3>Start of Day</h3></div>
+            <div class="panel-body">
+              <form class="form-grid two" id="openDrawerForm">
+                <div class="field"><label for="openingCash">Opening Cash</label><input id="openingCash" type="number" min="0" step="0.01" required></div>
+                <div class="field"><label for="cashierName">Cashier</label><input id="cashierName" value="Owner" required></div>
+                <button type="submit">Open Drawer</button>
+              </form>
+              <div id="cashOpenNotice" style="margin-top: 14px;"></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h3>End of Day</h3></div>
+            <div class="panel-body">
+              <form class="form-grid two" id="closeDrawerForm">
+                <div class="field"><label for="countedCash">Counted Cash</label><input id="countedCash" type="number" min="0" step="0.01" required></div>
+                <div class="field"><label for="closingNote">Closing Note</label><input id="closingNote" placeholder="Shortage reason, deposit ref"></div>
+                <button type="submit">Close Drawer</button>
+              </form>
+              <div style="height: 14px;"></div>
+              <div id="drawerSummary"></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h3>Cash Drawer History</h3></div>
+          <div class="panel-body" id="drawerHistory"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const money = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
+    const appKey = "pos-control-v1";
+    let deferredInstallPrompt = null;
+    let serverMode = false;
+    let currentUser = null;
+
+    let state = defaultState();
+    let cart = [];
+
+    function uid(prefix) {
+      return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    function toLocalISO(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function todayISO() {
+      return toLocalISO(new Date());
+    }
+
+    function nowStamp() {
+      return new Date().toISOString();
+    }
+
+    function parseNum(value) {
+      return Number.parseFloat(value || 0) || 0;
+    }
+
+    function defaultState() {
+      return normalizeState({
+        products: [
+          { id: uid("prd"), sku: "COF-001", name: "House Coffee", category: "Drinks", price: 75, cost: 35, stock: 42, reorder: 10 },
+          { id: uid("prd"), sku: "BRD-002", name: "Cheese Bread", category: "Bakery", price: 38, cost: 18, stock: 28, reorder: 8 },
+          { id: uid("prd"), sku: "MLK-003", name: "Fresh Milk 1L", category: "Grocery", price: 112, cost: 86, stock: 9, reorder: 10 },
+          { id: uid("prd"), sku: "RCE-004", name: "Rice 5kg", category: "Grocery", price: 310, cost: 260, stock: 16, reorder: 5 }
+        ],
+        sales: [],
+        stockLedger: [],
+        receivables: [],
+        receivableLedger: [],
+        drawers: [],
+        activeDrawerId: null,
+        cashier: "Owner"
+      });
+    }
+
+    function defaultAccounts() {
+      return [
+        { code: "1000", name: "Cash on Hand", type: "Asset" },
+        { code: "1010", name: "Cash in Bank", type: "Asset" },
+        { code: "1100", name: "Accounts Receivable", type: "Asset" },
+        { code: "1200", name: "Merchandise Inventory", type: "Asset" },
+        { code: "1210", name: "Expired / Spoiled Inventory", type: "Asset" },
+        { code: "1300", name: "Store Supplies", type: "Asset" },
+        { code: "1500", name: "Store Equipment", type: "Asset" },
+        { code: "1510", name: "Accumulated Depreciation - Equipment", type: "Contra Asset" },
+        { code: "1600", name: "Building", type: "Asset" },
+        { code: "1610", name: "Accumulated Depreciation - Building", type: "Contra Asset" },
+        { code: "1700", name: "Leasehold Improvements", type: "Asset" },
+        { code: "1710", name: "Accumulated Depreciation - Leasehold Improvements", type: "Contra Asset" },
+        { code: "2000", name: "Accounts Payable", type: "Liability" },
+        { code: "2100", name: "Loans Payable", type: "Liability" },
+        { code: "2200", name: "Taxes Payable", type: "Liability" },
+        { code: "2300", name: "Accrued Expenses", type: "Liability" },
+        { code: "3000", name: "Owner Capital", type: "Equity" },
+        { code: "3100", name: "Owner Drawings", type: "Equity" },
+        { code: "4000", name: "Sales Revenue", type: "Revenue" },
+        { code: "4100", name: "Sales Returns and Allowances", type: "Contra Revenue" },
+        { code: "4200", name: "Interest Income", type: "Other Income" },
+        { code: "4300", name: "Other Income", type: "Other Income" },
+        { code: "5000", name: "Cost of Goods Sold", type: "Expense" },
+        { code: "5100", name: "Inventory Shrinkage", type: "Expense" },
+        { code: "5110", name: "Expired / Spoiled Goods Expense", type: "Expense" },
+        { code: "5200", name: "Rent Expense", type: "Expense" },
+        { code: "5300", name: "Utilities Expense", type: "Expense" },
+        { code: "5400", name: "Supplies Expense", type: "Expense" },
+        { code: "5500", name: "Cash Short / Over", type: "Expense" },
+        { code: "5600", name: "Depreciation Expense - Equipment", type: "Expense" },
+        { code: "5610", name: "Depreciation Expense - Building", type: "Expense" },
+        { code: "5700", name: "Repairs and Maintenance", type: "Expense" },
+        { code: "5800", name: "Delivery / Freight Expense", type: "Expense" },
+        { code: "5900", name: "Bank Charges", type: "Expense" }
+      ];
+    }
+
+    function normalizeState(data) {
+      const existingAccounts = data.accounts || [];
+      const existingCodes = new Set(existingAccounts.map(item => item.code));
+      const missingAccounts = defaultAccounts().filter(item => !existingCodes.has(item.code));
+      data.accounts = [...existingAccounts, ...missingAccounts].sort((a, b) => a.code.localeCompare(b.code));
+      data.journalEntries = data.journalEntries || [];
+      data.accountingMigrated = data.accountingMigrated || false;
+      return data;
+    }
+
+    function loadState() {
+      const stored = localStorage.getItem(appKey);
+      if (stored) return normalizeState(JSON.parse(stored));
+
+      return defaultState();
+    }
+
+    function saveState() {
+      localStorage.setItem(appKey, JSON.stringify(state));
+      if (serverMode) {
+        fetch("/api/state", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(state)
+        }).catch(() => {
+          alert("Server save failed. Check your connection before continuing.");
+        });
+      }
+    }
+
+    function account(code) {
+      return state.accounts.find(item => item.code === code);
+    }
+
+    function addJournalEntry({ date = nowStamp(), memo, source = "Manual", lines }) {
+      const cleanLines = lines
+        .map(line => ({
+          accountCode: line.accountCode,
+          debit: Math.round(parseNum(line.debit) * 100) / 100,
+          credit: Math.round(parseNum(line.credit) * 100) / 100
+        }))
+        .filter(line => line.accountCode && (line.debit > 0 || line.credit > 0));
+      const debitTotal = cleanLines.reduce((sum, line) => sum + line.debit, 0);
+      const creditTotal = cleanLines.reduce((sum, line) => sum + line.credit, 0);
+
+      if (!cleanLines.length || Math.abs(debitTotal - creditTotal) > 0.009) {
+        throw new Error("Journal entry must have equal debit and credit totals.");
+      }
+
+      state.journalEntries.push({
+        id: uid("je"),
+        date,
+        memo,
+        source,
+        lines: cleanLines
+      });
+    }
+
+    function postSaleJournal(sale) {
+      const debitAccount = sale.paymentType === "cash" ? "1000" : "1100";
+      addJournalEntry({
+        date: sale.createdAt,
+        memo: `Sale to ${sale.customer || "Walk-in"}`,
+        source: sale.id,
+        lines: [
+          { accountCode: debitAccount, debit: sale.total, credit: 0 },
+          { accountCode: "4000", debit: 0, credit: sale.total },
+          { accountCode: "5000", debit: sale.cost, credit: 0 },
+          { accountCode: "1200", debit: 0, credit: sale.cost }
+        ]
+      });
+    }
+
+    function postReceivablePaymentJournal(payment) {
+      addJournalEntry({
+        date: payment.createdAt,
+        memo: `Receivable payment from ${payment.customer}`,
+        source: payment.id,
+        lines: [
+          { accountCode: "1000", debit: payment.amount, credit: 0 },
+          { accountCode: "1100", debit: 0, credit: payment.amount }
+        ]
+      });
+    }
+
+    function stockLossAccount(note) {
+      return /expir|spoil|damage|waste/i.test(note || "") ? "5110" : "5100";
+    }
+
+    function postStockMovementJournal(product, type, qty, note, createdAt = nowStamp()) {
+      const value = Math.round(qty * product.cost * 100) / 100;
+      if (value <= 0) return;
+      addJournalEntry({
+        date: createdAt,
+        memo: `${type === "in" ? "Stock purchase/increase" : "Stock adjustment"} - ${product.name}${note ? ` (${note})` : ""}`,
+        source: "Inventory",
+        lines: type === "in"
+          ? [
+              { accountCode: "1200", debit: value, credit: 0 },
+              { accountCode: "2000", debit: 0, credit: value }
+            ]
+          : [
+              { accountCode: stockLossAccount(note), debit: value, credit: 0 },
+              { accountCode: "1200", debit: 0, credit: value }
+            ]
+      });
+    }
+
+    function postOpeningInventoryJournal(product) {
+      const value = Math.round(product.stock * product.cost * 100) / 100;
+      if (value <= 0) return;
+      addJournalEntry({
+        date: nowStamp(),
+        memo: `Opening inventory - ${product.name}`,
+        source: product.id,
+        lines: [
+          { accountCode: "1200", debit: value, credit: 0 },
+          { accountCode: "3000", debit: 0, credit: value }
+        ]
+      });
+    }
+
+    function postCashVarianceJournal(drawer) {
+      if (!drawer.variance) return;
+      const amount = Math.abs(drawer.variance);
+      addJournalEntry({
+        date: drawer.closedAt,
+        memo: `Cash drawer ${drawer.variance < 0 ? "shortage" : "overage"}`,
+        source: drawer.id,
+        lines: drawer.variance < 0
+          ? [
+              { accountCode: "5500", debit: amount, credit: 0 },
+              { accountCode: "1000", debit: 0, credit: amount }
+            ]
+          : [
+              { accountCode: "1000", debit: amount, credit: 0 },
+              { accountCode: "5500", debit: 0, credit: amount }
+            ]
+      });
+    }
+
+    function migrateAccountingEntries() {
+      if (state.accountingMigrated) return;
+      state.sales.forEach(sale => postSaleJournal(sale));
+      state.receivableLedger.forEach(payment => postReceivablePaymentJournal(payment));
+      state.drawers.filter(drawer => drawer.closedAt && drawer.variance).forEach(drawer => postCashVarianceJournal(drawer));
+      state.accountingMigrated = true;
+      saveState();
+    }
+
+    function activeDrawer() {
+      return state.drawers.find(drawer => drawer.id === state.activeDrawerId && !drawer.closedAt);
+    }
+
+    function salesInRange(start, end) {
+      const startTime = new Date(`${start}T00:00:00`).getTime();
+      const endTime = new Date(`${end}T23:59:59`).getTime();
+      return state.sales.filter(sale => {
+        const time = new Date(sale.createdAt).getTime();
+        return time >= startTime && time <= endTime;
+      });
+    }
+
+    function getReportTotals(sales) {
+      return sales.reduce((acc, sale) => {
+        acc.gross += sale.total;
+        acc.cost += sale.cost;
+        if (sale.paymentType === "cash") acc.cash += sale.total;
+        if (sale.paymentType === "receivable") acc.receivable += sale.total;
+        return acc;
+      }, { gross: 0, cost: 0, cash: 0, receivable: 0 });
+    }
+
+    function currentDaySales() {
+      return salesInRange(todayISO(), todayISO());
+    }
+
+    function renderAll() {
+      document.getElementById("todayText").textContent = new Date().toLocaleString("en-PH", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+      });
+      renderStatus();
+      renderDashboard();
+      renderProducts();
+      renderCart();
+      renderInventory();
+      renderStockOptions();
+      renderReceivables();
+      renderAccounting();
+      renderCashDrawer();
+      runReport();
+    }
+
+    function renderStatus() {
+      const drawer = activeDrawer();
+      const status = document.getElementById("drawerStatus");
+      status.className = `pill${drawer ? " open" : ""}`;
+      status.textContent = drawer ? `Drawer open: ${money.format(drawer.openingCash)}` : "Drawer closed";
+      document.getElementById("activeUser").textContent = `Cashier: ${state.cashier}`;
+    }
+
+    function renderDashboard() {
+      const totals = getReportTotals(currentDaySales());
+      const receivableBalance = state.receivables.reduce((sum, item) => sum + item.balance, 0);
+      const lowStock = state.products.filter(product => product.stock <= product.reorder).length;
+
+      document.getElementById("metricSales").textContent = money.format(totals.gross);
+      document.getElementById("metricReceivables").textContent = money.format(receivableBalance);
+      document.getElementById("metricLowStock").textContent = lowStock;
+
+      document.getElementById("recentSales").innerHTML = tableOrEmpty(
+        state.sales.slice(-6).reverse(),
+        ["Date", "Customer", "Type", "Total"],
+        sale => [
+          new Date(sale.createdAt).toLocaleString("en-PH"),
+          sale.customer || "Walk-in",
+          sale.paymentType,
+          money.format(sale.total)
+        ],
+        "No sales recorded yet."
+      );
+
+      const alerts = state.products.filter(product => product.stock <= product.reorder);
+      document.getElementById("inventoryAlerts").innerHTML = tableOrEmpty(
+        alerts,
+        ["SKU", "Product", "Stock", "Reorder"],
+        product => [product.sku, product.name, `<span class="stock-low">${product.stock}</span>`, product.reorder],
+        "No low stock items."
+      );
+    }
+
+    function renderProducts() {
+      const search = document.getElementById("productSearch").value.toLowerCase();
+      const products = state.products.filter(product =>
+        product.name.toLowerCase().includes(search) ||
+        product.sku.toLowerCase().includes(search) ||
+        product.category.toLowerCase().includes(search)
+      );
+
+      document.getElementById("productGrid").innerHTML = products.length ? products.map(product => `
+        <button class="product" onclick="addToCart('${product.id}')" ${product.stock <= 0 ? "disabled" : ""}>
+          <strong>${escapeHtml(product.name)}</strong>
+          <small>${escapeHtml(product.sku)} · ${escapeHtml(product.category)}</small>
+          <span>${money.format(product.price)}</span>
+          <small class="${product.stock <= product.reorder ? "stock-low" : ""}">Stock: ${product.stock}</small>
+        </button>
+      `).join("") : `<div class="empty">No matching products.</div>`;
+    }
+
+    function renderCart() {
+      const subtotal = cart.reduce((sum, item) => sum + item.qty * item.price, 0);
+      const tendered = parseNum(document.getElementById("amountTendered").value);
+      const paymentType = document.getElementById("paymentType").value;
+      const change = paymentType === "cash" ? Math.max(tendered - subtotal, 0) : 0;
+
+      document.getElementById("cartList").innerHTML = cart.length ? cart.map(item => `
+        <div class="cart-item">
+          <div><strong>${escapeHtml(item.name)}</strong><br><small>${money.format(item.price)} each</small></div>
+          <input type="number" min="1" max="${item.stock}" value="${item.qty}" onchange="updateCartQty('${item.id}', this.value)">
+          <strong class="right">${money.format(item.qty * item.price)}</strong>
+          <button class="secondary" onclick="removeFromCart('${item.id}')" title="Remove item">x</button>
+        </div>
+      `).join("") : `<div class="empty">Select products to start a sale.</div>`;
+
+      document.getElementById("cartSubtotal").textContent = money.format(subtotal);
+      document.getElementById("cartTotal").textContent = money.format(subtotal);
+      document.getElementById("cartChange").textContent = money.format(change);
+    }
+
+    function renderInventory() {
+      document.getElementById("inventoryTable").innerHTML = tableOrEmpty(
+        state.products,
+        ["SKU", "Product", "Price", "Stock", "Actions"],
+        product => [
+          product.sku,
+          `${escapeHtml(product.name)}<br><small>${escapeHtml(product.category)}</small>`,
+          money.format(product.price),
+          product.stock <= product.reorder ? `<span class="stock-low">${product.stock}</span>` : product.stock,
+          `<div class="actions"><button class="secondary" onclick="editProduct('${product.id}')">Edit</button><button class="danger" onclick="deleteProduct('${product.id}')">Delete</button></div>`
+        ],
+        "No products yet."
+      );
+
+      document.getElementById("stockLedger").innerHTML = tableOrEmpty(
+        state.stockLedger.slice(-8).reverse(),
+        ["Date", "Product", "Type", "Qty", "Note"],
+        row => [
+          new Date(row.createdAt).toLocaleString("en-PH"),
+          escapeHtml(row.productName),
+          row.type === "in" ? "Stock In" : "Stock Out",
+          row.qty,
+          escapeHtml(row.note || "")
+        ],
+        "No stock movements yet."
+      );
+    }
+
+    function renderStockOptions() {
+      const productOptions = state.products.map(product => `<option value="${product.id}">${escapeHtml(product.sku)} - ${escapeHtml(product.name)}</option>`).join("");
+      document.getElementById("stockProduct").innerHTML = productOptions;
+
+      const receivableOptions = state.receivables
+        .filter(item => item.balance > 0)
+        .map(item => `<option value="${item.id}">${escapeHtml(item.customer)} - ${money.format(item.balance)}</option>`)
+        .join("");
+      document.getElementById("receivableAccount").innerHTML = receivableOptions;
+    }
+
+    function renderReceivables() {
+      document.getElementById("receivableTable").innerHTML = tableOrEmpty(
+        state.receivables,
+        ["Customer", "Original", "Paid", "Balance", "Status"],
+        item => [
+          escapeHtml(item.customer),
+          money.format(item.amount),
+          money.format(item.paid),
+          money.format(item.balance),
+          item.balance <= 0 ? "Paid" : "Open"
+        ],
+        "No receivables recorded."
+      );
+
+      document.getElementById("receivableLedger").innerHTML = tableOrEmpty(
+        state.receivableLedger.slice(-8).reverse(),
+        ["Date", "Customer", "Amount", "Note"],
+        row => [
+          new Date(row.createdAt).toLocaleString("en-PH"),
+          escapeHtml(row.customer),
+          money.format(row.amount),
+          escapeHtml(row.note || "")
+        ],
+        "No receivable payments yet."
+      );
+    }
+
+    function accountOptions() {
+      return state.accounts
+        .map(item => `<option value="${item.code}">${item.code} - ${escapeHtml(item.name)}</option>`)
+        .join("");
+    }
+
+    function renderJournalLines(count = null) {
+      const holder = document.getElementById("journalLines");
+      const existingCount = holder.querySelectorAll(".journal-line").length;
+      const lineCount = count || Math.max(existingCount, 2);
+      holder.innerHTML = Array.from({ length: lineCount }, (_, index) => `
+        <div class="form-grid journal-line" style="grid-template-columns: 1.4fr 1fr 1fr; margin-bottom: 10px;">
+          <div class="field"><label>Account ${index + 1}</label><select class="journal-account">${accountOptions()}</select></div>
+          <div class="field"><label>Debit</label><input class="journal-debit" type="number" min="0" step="0.01" value="0"></div>
+          <div class="field"><label>Credit</label><input class="journal-credit" type="number" min="0" step="0.01" value="0"></div>
+        </div>
+      `).join("");
+    }
+
+    function entriesThrough(end) {
+      const endTime = new Date(`${end}T23:59:59`).getTime();
+      return state.journalEntries.filter(entry => new Date(entry.date).getTime() <= endTime);
+    }
+
+    function entriesInAccountingRange(start, end) {
+      const startTime = new Date(`${start}T00:00:00`).getTime();
+      const endTime = new Date(`${end}T23:59:59`).getTime();
+      return state.journalEntries.filter(entry => {
+        const time = new Date(entry.date).getTime();
+        return time >= startTime && time <= endTime;
+      });
+    }
+
+    function accountBalances(entries) {
+      const balances = new Map(state.accounts.map(item => [item.code, { account: item, debit: 0, credit: 0 }]));
+      entries.forEach(entry => {
+        entry.lines.forEach(line => {
+          const row = balances.get(line.accountCode);
+          if (!row) return;
+          row.debit += line.debit;
+          row.credit += line.credit;
+        });
+      });
+      return Array.from(balances.values());
+    }
+
+    function normalBalance(row) {
+      if (["Asset", "Expense"].includes(row.account.type)) return row.debit - row.credit;
+      return row.credit - row.debit;
+    }
+
+    function balanceSheetAmount(row) {
+      const amount = normalBalance(row);
+      return row.account.type === "Contra Asset" ? -amount : amount;
+    }
+
+    function renderAccounting() {
+      if (!document.getElementById("accounting")) return;
+      if (!document.getElementById("journalLines").children.length) renderJournalLines(2);
+
+      const start = document.getElementById("accountingStart").value || todayISO();
+      const end = document.getElementById("accountingEnd").value || todayISO();
+      const throughBalances = accountBalances(entriesThrough(end));
+      const rangeBalances = accountBalances(entriesInAccountingRange(start, end));
+
+      const assets = throughBalances
+        .filter(row => ["Asset", "Contra Asset"].includes(row.account.type))
+        .reduce((sum, row) => sum + balanceSheetAmount(row), 0);
+      const liabilities = throughBalances.filter(row => row.account.type === "Liability").reduce((sum, row) => sum + normalBalance(row), 0);
+      const grossRevenue = rangeBalances.filter(row => row.account.type === "Revenue").reduce((sum, row) => sum + normalBalance(row), 0);
+      const contraRevenue = rangeBalances.filter(row => row.account.type === "Contra Revenue").reduce((sum, row) => sum + normalBalance(row), 0);
+      const otherIncome = rangeBalances.filter(row => row.account.type === "Other Income").reduce((sum, row) => sum + normalBalance(row), 0);
+      const revenue = grossRevenue - contraRevenue;
+      const expenses = rangeBalances.filter(row => row.account.type === "Expense").reduce((sum, row) => sum + normalBalance(row), 0);
+      const netIncome = revenue + otherIncome - expenses;
+
+      document.getElementById("acctAssets").textContent = money.format(assets);
+      document.getElementById("acctLiabilities").textContent = money.format(liabilities);
+      document.getElementById("acctNetIncome").textContent = money.format(netIncome);
+
+      document.getElementById("chartAccounts").innerHTML = tableOrEmpty(
+        state.accounts,
+        ["Code", "Account", "Type"],
+        item => [item.code, escapeHtml(item.name), item.type],
+        "No accounts configured."
+      );
+
+      const trialRows = throughBalances.filter(row => row.debit || row.credit);
+      const trialDisplayRows = trialRows.map(row => {
+        const net = row.debit - row.credit;
+        return {
+          account: row.account,
+          debit: net >= 0 ? net : 0,
+          credit: net < 0 ? Math.abs(net) : 0
+        };
+      }).filter(row => row.debit || row.credit);
+      const trialDebit = trialDisplayRows.reduce((sum, row) => sum + row.debit, 0);
+      const trialCredit = trialDisplayRows.reduce((sum, row) => sum + row.credit, 0);
+      document.getElementById("trialBalance").innerHTML = `
+        ${tableOrEmpty(
+          trialDisplayRows,
+          ["Code", "Account", "Debit", "Credit"],
+          row => [row.account.code, escapeHtml(row.account.name), money.format(row.debit), money.format(row.credit)],
+          "No journal entries yet."
+        )}
+        <div class="total-line grand" style="margin-top: 12px;"><span>Total</span><strong>${money.format(trialDebit)} / ${money.format(trialCredit)}</strong></div>
+      `;
+
+      const incomeRows = rangeBalances.filter(row => ["Revenue", "Contra Revenue", "Other Income", "Expense"].includes(row.account.type) && normalBalance(row));
+      document.getElementById("incomeStatement").innerHTML = `
+        ${tableOrEmpty(
+          incomeRows,
+          ["Account", "Type", "Amount"],
+          row => [escapeHtml(row.account.name), row.account.type, money.format(row.account.type === "Contra Revenue" ? -normalBalance(row) : normalBalance(row))],
+          "No income or expense activity in this range."
+        )}
+        <div class="total-line"><span>Gross Revenue</span><strong>${money.format(grossRevenue)}</strong></div>
+        <div class="total-line"><span>Contra Revenue</span><strong>${money.format(contraRevenue)}</strong></div>
+        <div class="total-line"><span>Net Revenue</span><strong>${money.format(revenue)}</strong></div>
+        <div class="total-line"><span>Other Income</span><strong>${money.format(otherIncome)}</strong></div>
+        <div class="total-line"><span>Expenses</span><strong>${money.format(expenses)}</strong></div>
+        <div class="total-line grand"><span>Net Income</span><strong>${money.format(netIncome)}</strong></div>
+      `;
+
+      const equity = throughBalances.filter(row => row.account.type === "Equity").reduce((sum, row) => sum + normalBalance(row), 0);
+      const lifetimeIncomeRows = accountBalances(entriesThrough(end));
+      const lifetimeRevenue = lifetimeIncomeRows.filter(row => row.account.type === "Revenue").reduce((sum, row) => sum + normalBalance(row), 0);
+      const lifetimeContraRevenue = lifetimeIncomeRows.filter(row => row.account.type === "Contra Revenue").reduce((sum, row) => sum + normalBalance(row), 0);
+      const lifetimeOtherIncome = lifetimeIncomeRows.filter(row => row.account.type === "Other Income").reduce((sum, row) => sum + normalBalance(row), 0);
+      const lifetimeExpenses = lifetimeIncomeRows.filter(row => row.account.type === "Expense").reduce((sum, row) => sum + normalBalance(row), 0);
+      const retainedIncome = lifetimeRevenue - lifetimeContraRevenue + lifetimeOtherIncome - lifetimeExpenses;
+      const totalEquity = equity + retainedIncome;
+      const bsRows = throughBalances.filter(row => ["Asset", "Contra Asset", "Liability", "Equity"].includes(row.account.type) && normalBalance(row));
+      document.getElementById("balanceSheet").innerHTML = `
+        ${tableOrEmpty(
+          bsRows,
+          ["Account", "Type", "Balance"],
+          row => [escapeHtml(row.account.name), row.account.type, money.format(["Asset", "Contra Asset"].includes(row.account.type) ? balanceSheetAmount(row) : normalBalance(row))],
+          "No balance sheet activity yet."
+        )}
+        <div class="total-line"><span>Total Assets</span><strong>${money.format(assets)}</strong></div>
+        <div class="total-line"><span>Total Liabilities</span><strong>${money.format(liabilities)}</strong></div>
+        <div class="total-line"><span>Owner Equity</span><strong>${money.format(totalEquity)}</strong></div>
+        <div class="total-line grand"><span>Liabilities + Equity</span><strong>${money.format(liabilities + totalEquity)}</strong></div>
+      `;
+
+      document.getElementById("journalEntryList").innerHTML = tableOrEmpty(
+        state.journalEntries.slice().reverse(),
+        ["Date", "Memo", "Source", "Lines"],
+        entry => [
+          new Date(entry.date).toLocaleString("en-PH"),
+          escapeHtml(entry.memo),
+          escapeHtml(entry.source),
+          entry.lines.map(line => {
+            const acct = account(line.accountCode);
+            return `${line.accountCode} ${escapeHtml(acct ? acct.name : "")}: Dr ${money.format(line.debit)} / Cr ${money.format(line.credit)}`;
+          }).join("<br>")
+        ],
+        "No journal entries yet."
+      );
+    }
+
+    function renderCashDrawer() {
+      const drawer = activeDrawer();
+      const currentSales = drawer ? state.sales.filter(sale => sale.drawerId === drawer.id && sale.paymentType === "cash") : [];
+      const cashSales = currentSales.reduce((sum, sale) => sum + sale.total, 0);
+      const receivablePayments = drawer ? state.receivableLedger.filter(row => row.drawerId === drawer.id).reduce((sum, row) => sum + row.amount, 0) : 0;
+      const expected = drawer ? drawer.openingCash + cashSales + receivablePayments : 0;
+
+      document.getElementById("cashOpenNotice").innerHTML = drawer
+        ? `<div class="notice">Opened by ${escapeHtml(drawer.cashier)} at ${new Date(drawer.openedAt).toLocaleString("en-PH")} with ${money.format(drawer.openingCash)}.</div>`
+        : `<div class="empty">Open the drawer at the start of the day before recording cash sales.</div>`;
+
+      document.getElementById("drawerSummary").innerHTML = drawer ? `
+        <table>
+          <tbody>
+            <tr><th>Opening Cash</th><td>${money.format(drawer.openingCash)}</td></tr>
+            <tr><th>Cash Sales</th><td>${money.format(cashSales)}</td></tr>
+            <tr><th>Receivable Payments</th><td>${money.format(receivablePayments)}</td></tr>
+            <tr><th>Expected Cash</th><td><strong>${money.format(expected)}</strong></td></tr>
+          </tbody>
+        </table>
+      ` : `<div class="empty">No active drawer to close.</div>`;
+
+      document.getElementById("drawerHistory").innerHTML = tableOrEmpty(
+        state.drawers.slice().reverse(),
+        ["Opened", "Cashier", "Opening", "Expected", "Counted", "Variance"],
+        drawerRow => [
+          new Date(drawerRow.openedAt).toLocaleString("en-PH"),
+          escapeHtml(drawerRow.cashier),
+          money.format(drawerRow.openingCash),
+          drawerRow.expectedCash == null ? "Open" : money.format(drawerRow.expectedCash),
+          drawerRow.countedCash == null ? "Open" : money.format(drawerRow.countedCash),
+          drawerRow.variance == null ? "Open" : money.format(drawerRow.variance)
+        ],
+        "No drawer sessions yet."
+      );
+    }
+
+    function runReport() {
+      const start = document.getElementById("reportStart").value || todayISO();
+      const end = document.getElementById("reportEnd").value || start;
+      const sales = salesInRange(start, end);
+      const totals = getReportTotals(sales);
+
+      document.getElementById("reportGross").textContent = money.format(totals.gross);
+      document.getElementById("reportCost").textContent = money.format(totals.cost);
+      document.getElementById("reportNet").textContent = money.format(totals.gross - totals.cost);
+      document.getElementById("reportTable").innerHTML = tableOrEmpty(
+        sales.slice().reverse(),
+        ["Date", "Customer", "Payment", "Gross", "Cost", "Income"],
+        sale => [
+          new Date(sale.createdAt).toLocaleString("en-PH"),
+          escapeHtml(sale.customer || "Walk-in"),
+          sale.paymentType,
+          money.format(sale.total),
+          money.format(sale.cost),
+          money.format(sale.total - sale.cost)
+        ],
+        "No sales in selected range."
+      );
+    }
+
+    function tableOrEmpty(rows, headers, mapper, emptyText) {
+      if (!rows.length) return `<div class="empty">${emptyText}</div>`;
+      return `
+        <table>
+          <thead><tr>${headers.map(header => `<th>${header}</th>`).join("")}</tr></thead>
+          <tbody>
+            ${rows.map(row => `<tr>${mapper(row).map(cell => `<td>${cell}</td>`).join("")}</tr>`).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function addToCart(id) {
+      const product = state.products.find(item => item.id === id);
+      if (!product || product.stock <= 0) return;
+      const existing = cart.find(item => item.id === id);
+      if (existing) {
+        if (existing.qty < product.stock) existing.qty += 1;
+      } else {
+        cart.push({ id: product.id, name: product.name, price: product.price, cost: product.cost, qty: 1, stock: product.stock });
+      }
+      renderCart();
+    }
+
+    function updateCartQty(id, value) {
+      const item = cart.find(row => row.id === id);
+      if (!item) return;
+      item.qty = Math.max(1, Math.min(Number.parseInt(value, 10) || 1, item.stock));
+      renderCart();
+    }
+
+    function removeFromCart(id) {
+      cart = cart.filter(item => item.id !== id);
+      renderCart();
+    }
+
+    window.addToCart = addToCart;
+    window.updateCartQty = updateCartQty;
+    window.removeFromCart = removeFromCart;
+
+    window.editProduct = function editProduct(id) {
+      const product = state.products.find(item => item.id === id);
+      if (!product) return;
+      document.getElementById("productId").value = product.id;
+      document.getElementById("sku").value = product.sku;
+      document.getElementById("productName").value = product.name;
+      document.getElementById("category").value = product.category;
+      document.getElementById("unitPrice").value = product.price;
+      document.getElementById("costPrice").value = product.cost;
+      document.getElementById("stockQty").value = product.stock;
+      document.getElementById("reorderLevel").value = product.reorder;
+      document.getElementById("productName").focus();
+    };
+
+    window.deleteProduct = function deleteProduct(id) {
+      if (!confirm("Delete this product? Existing sales history will remain.")) return;
+      state.products = state.products.filter(item => item.id !== id);
+      saveState();
+      renderAll();
+    };
+
+    document.querySelectorAll("[data-section]").forEach(button => {
+      button.addEventListener("click", () => showSection(button.dataset.section));
+    });
+
+    document.querySelectorAll("[data-section-link]").forEach(button => {
+      button.addEventListener("click", () => showSection(button.dataset.sectionLink));
+    });
+
+    function showSection(id) {
+      document.querySelectorAll("[data-section]").forEach(button => button.classList.toggle("active", button.dataset.section === id));
+      document.querySelectorAll(".section").forEach(section => section.classList.toggle("active", section.id === id));
+      document.getElementById("pageTitle").textContent = document.querySelector(`[data-section="${id}"]`).dataset.title;
+    }
+
+    document.getElementById("productSearch").addEventListener("input", renderProducts);
+    document.getElementById("amountTendered").addEventListener("input", renderCart);
+    document.getElementById("paymentType").addEventListener("change", renderCart);
+    document.getElementById("clearCartBtn").addEventListener("click", () => {
+      cart = [];
+      renderCart();
+    });
+
+    document.getElementById("completeSaleBtn").addEventListener("click", () => {
+      if (!cart.length) {
+        alert("Add at least one product.");
+        return;
+      }
+
+      const paymentType = document.getElementById("paymentType").value;
+      const customer = document.getElementById("customerName").value.trim() || "Walk-in";
+      const total = cart.reduce((sum, item) => sum + item.qty * item.price, 0);
+      const cost = cart.reduce((sum, item) => sum + item.qty * item.cost, 0);
+      const drawer = activeDrawer();
+
+      if (paymentType === "cash" && !drawer) {
+        alert("Open the cash drawer before recording cash sales.");
+        return;
+      }
+
+      if (paymentType === "cash" && parseNum(document.getElementById("amountTendered").value) < total) {
+        alert("Amount tendered is below the sale total.");
+        return;
+      }
+
+      if (paymentType === "receivable" && customer === "Walk-in") {
+        alert("Enter a customer name for receivable sales.");
+        return;
+      }
+
+      for (const item of cart) {
+        const product = state.products.find(row => row.id === item.id);
+        if (!product || product.stock < item.qty) {
+          alert(`${item.name} does not have enough stock.`);
+          return;
+        }
+      }
+
+      const sale = {
+        id: uid("sale"),
+        createdAt: nowStamp(),
+        customer,
+        paymentType,
+        total,
+        cost,
+        drawerId: drawer ? drawer.id : null,
+        items: cart.map(item => ({ ...item }))
+      };
+
+      state.sales.push(sale);
+      cart.forEach(item => {
+        const product = state.products.find(row => row.id === item.id);
+        product.stock -= item.qty;
+        state.stockLedger.push({
+          id: uid("stk"),
+          createdAt: nowStamp(),
+          productId: item.id,
+          productName: item.name,
+          type: "out",
+          qty: item.qty,
+          note: `Sale ${sale.id}`
+        });
+      });
+
+      if (paymentType === "receivable") {
+        state.receivables.push({
+          id: uid("rec"),
+          saleId: sale.id,
+          createdAt: sale.createdAt,
+          customer,
+          amount: total,
+          paid: 0,
+          balance: total
+        });
+      }
+      postSaleJournal(sale);
+
+      cart = [];
+      document.getElementById("customerName").value = "";
+      document.getElementById("amountTendered").value = "0";
+      saveState();
+      renderAll();
+      alert("Sale completed.");
+    });
+
+    document.getElementById("productForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const id = document.getElementById("productId").value || uid("prd");
+      const existing = state.products.find(product => product.id === id);
+      const product = {
+        id,
+        sku: document.getElementById("sku").value.trim(),
+        name: document.getElementById("productName").value.trim(),
+        category: document.getElementById("category").value.trim(),
+        price: parseNum(document.getElementById("unitPrice").value),
+        cost: parseNum(document.getElementById("costPrice").value),
+        stock: Number.parseInt(document.getElementById("stockQty").value, 10) || 0,
+        reorder: Number.parseInt(document.getElementById("reorderLevel").value, 10) || 0
+      };
+
+      if (existing) {
+        const stockDifference = product.stock - existing.stock;
+        Object.assign(existing, product);
+        if (stockDifference !== 0) {
+          postStockMovementJournal(product, stockDifference > 0 ? "in" : "out", Math.abs(stockDifference), "Product stock edit");
+        }
+      } else {
+        state.products.push(product);
+        state.stockLedger.push({
+          id: uid("stk"),
+          createdAt: nowStamp(),
+          productId: product.id,
+          productName: product.name,
+          type: "in",
+          qty: product.stock,
+          note: "Opening stock"
+        });
+        postOpeningInventoryJournal(product);
+      }
+
+      event.target.reset();
+      document.getElementById("productId").value = "";
+      saveState();
+      renderAll();
+    });
+
+    document.getElementById("stockForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const product = state.products.find(item => item.id === document.getElementById("stockProduct").value);
+      const type = document.getElementById("stockType").value;
+      const qty = Number.parseInt(document.getElementById("stockAmount").value, 10) || 0;
+      if (!product || qty <= 0) return;
+      if (type === "out" && product.stock < qty) {
+        alert("Stock out quantity is greater than current stock.");
+        return;
+      }
+
+      product.stock += type === "in" ? qty : -qty;
+      const note = document.getElementById("stockNote").value.trim();
+      state.stockLedger.push({
+        id: uid("stk"),
+        createdAt: nowStamp(),
+        productId: product.id,
+        productName: product.name,
+        type,
+        qty,
+        note
+      });
+      postStockMovementJournal(product, type, qty, note);
+      event.target.reset();
+      saveState();
+      renderAll();
+    });
+
+    document.getElementById("paymentForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const account = state.receivables.find(item => item.id === document.getElementById("receivableAccount").value);
+      const amount = parseNum(document.getElementById("receivablePayment").value);
+      const drawer = activeDrawer();
+      if (!account || amount <= 0) return;
+      if (!drawer) {
+        alert("Open the cash drawer before receiving payments.");
+        return;
+      }
+      const applied = Math.min(amount, account.balance);
+      account.paid += applied;
+      account.balance -= applied;
+      const payment = {
+        id: uid("pay"),
+        createdAt: nowStamp(),
+        receivableId: account.id,
+        customer: account.customer,
+        amount: applied,
+        note: document.getElementById("paymentNote").value.trim(),
+        drawerId: drawer.id
+      };
+      state.receivableLedger.push(payment);
+      postReceivablePaymentJournal(payment);
+      event.target.reset();
+      saveState();
+      renderAll();
+    });
+
+    document.getElementById("reportPreset").addEventListener("change", () => {
+      const now = new Date();
+      const preset = document.getElementById("reportPreset").value;
+      let start = todayISO();
+      let end = todayISO();
+      if (preset === "month") {
+        start = toLocalISO(new Date(now.getFullYear(), now.getMonth(), 1));
+        end = toLocalISO(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+      }
+      if (preset === "year") {
+        start = `${now.getFullYear()}-01-01`;
+        end = `${now.getFullYear()}-12-31`;
+      }
+      document.getElementById("reportStart").value = start;
+      document.getElementById("reportEnd").value = end;
+      runReport();
+    });
+    document.getElementById("runReportBtn").addEventListener("click", runReport);
+
+    document.getElementById("openDrawerForm").addEventListener("submit", event => {
+      event.preventDefault();
+      if (activeDrawer()) {
+        alert("A drawer is already open.");
+        return;
+      }
+      state.cashier = document.getElementById("cashierName").value.trim() || "Owner";
+      const drawer = {
+        id: uid("drw"),
+        openedAt: nowStamp(),
+        closedAt: null,
+        cashier: state.cashier,
+        openingCash: parseNum(document.getElementById("openingCash").value),
+        expectedCash: null,
+        countedCash: null,
+        variance: null,
+        note: ""
+      };
+      state.drawers.push(drawer);
+      state.activeDrawerId = drawer.id;
+      event.target.reset();
+      document.getElementById("cashierName").value = state.cashier;
+      saveState();
+      renderAll();
+    });
+
+    document.getElementById("closeDrawerForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const drawer = activeDrawer();
+      if (!drawer) {
+        alert("No active drawer to close.");
+        return;
+      }
+      const cashSales = state.sales
+        .filter(sale => sale.drawerId === drawer.id && sale.paymentType === "cash")
+        .reduce((sum, sale) => sum + sale.total, 0);
+      const receivablePayments = state.receivableLedger
+        .filter(row => row.drawerId === drawer.id)
+        .reduce((sum, row) => sum + row.amount, 0);
+      const expected = drawer.openingCash + cashSales + receivablePayments;
+      const counted = parseNum(document.getElementById("countedCash").value);
+
+      drawer.closedAt = nowStamp();
+      drawer.expectedCash = expected;
+      drawer.countedCash = counted;
+      drawer.variance = counted - expected;
+      drawer.note = document.getElementById("closingNote").value.trim();
+      postCashVarianceJournal(drawer);
+      state.activeDrawerId = null;
+      event.target.reset();
+      saveState();
+      renderAll();
+    });
+
+    document.getElementById("reportStart").value = todayISO();
+    document.getElementById("reportEnd").value = todayISO();
+    document.getElementById("accountingStart").value = todayISO();
+    document.getElementById("accountingEnd").value = todayISO();
+    document.getElementById("addJournalLineBtn").addEventListener("click", () => {
+      const existingLines = Array.from(document.querySelectorAll(".journal-line")).map(row => ({
+        accountCode: row.querySelector(".journal-account").value,
+        debit: row.querySelector(".journal-debit").value,
+        credit: row.querySelector(".journal-credit").value
+      }));
+      renderJournalLines(existingLines.length + 1);
+      Array.from(document.querySelectorAll(".journal-line")).forEach((row, index) => {
+        if (!existingLines[index]) return;
+        row.querySelector(".journal-account").value = existingLines[index].accountCode;
+        row.querySelector(".journal-debit").value = existingLines[index].debit;
+        row.querySelector(".journal-credit").value = existingLines[index].credit;
+      });
+    });
+    document.getElementById("journalForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const lines = Array.from(document.querySelectorAll(".journal-line")).map(row => ({
+        accountCode: row.querySelector(".journal-account").value,
+        debit: parseNum(row.querySelector(".journal-debit").value),
+        credit: parseNum(row.querySelector(".journal-credit").value)
+      }));
+      try {
+        addJournalEntry({
+          date: `${document.getElementById("journalDate").value}T12:00:00`,
+          memo: document.getElementById("journalMemo").value.trim(),
+          source: "Manual",
+          lines
+        });
+      } catch (error) {
+        alert(error.message);
+        return;
+      }
+      event.target.reset();
+      document.getElementById("journalDate").value = todayISO();
+      renderJournalLines(2);
+      saveState();
+      renderAll();
+    });
+    document.getElementById("runAccountingBtn").addEventListener("click", renderAccounting);
+    document.getElementById("journalDate").value = todayISO();
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || "Request failed");
+      }
+      return response.json();
+    }
+
+    function showLogin(message = "") {
+      document.getElementById("loginScreen").classList.add("active");
+      document.getElementById("appShell").classList.add("locked");
+      document.getElementById("loginMessage").textContent = message;
+    }
+
+    function showApp() {
+      document.getElementById("loginScreen").classList.remove("active");
+      document.getElementById("appShell").classList.remove("locked");
+      renderAll();
+    }
+
+    async function loadServerState() {
+      const data = await api("/api/state");
+      state = normalizeState(data);
+      localStorage.setItem(appKey, JSON.stringify(state));
+    }
+
+    async function boot() {
+      try {
+        const session = await api("/api/me");
+        serverMode = true;
+        currentUser = session.user;
+        state.cashier = currentUser.username;
+        await loadServerState();
+        showApp();
+      } catch (error) {
+        try {
+          const health = await fetch("/api/health");
+          if (health.ok) {
+            serverMode = true;
+            showLogin("Please sign in.");
+            return;
+          }
+        } catch (_) {
+          serverMode = false;
+        }
+        state = loadState();
+        migrateAccountingEntries();
+        showApp();
+      }
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      try {
+        const result = await api("/api/login", {
+          method: "POST",
+          body: JSON.stringify({
+            username: document.getElementById("loginUsername").value.trim(),
+            password: document.getElementById("loginPassword").value
+          })
+        });
+        currentUser = result.user;
+        state.cashier = currentUser.username;
+        await loadServerState();
+        showApp();
+      } catch (error) {
+        showLogin(error.message);
+      }
+    });
+
+    document.getElementById("logoutBtn").addEventListener("click", async () => {
+      if (serverMode) await api("/api/logout", { method: "POST" }).catch(() => {});
+      currentUser = null;
+      showLogin("Signed out.");
+    });
+
+    boot();
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("service-worker.js").catch(() => {});
+      });
+    }
+
+    window.addEventListener("beforeinstallprompt", event => {
+      event.preventDefault();
+      deferredInstallPrompt = event;
+      document.getElementById("installAppBtn").classList.add("ready");
+    });
+
+    document.getElementById("installAppBtn").addEventListener("click", async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      document.getElementById("installAppBtn").classList.remove("ready");
+    });
+  </script>
+</body>
+</html>
