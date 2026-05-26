@@ -296,9 +296,11 @@ if (url.pathname === "/api/create-cashier" && req.method === "GET") {
 
   const users = readJson(USERS_FILE);
 
-  if (users.some(u => u.username === "cashier")) {
-    return send(res, 400, { error: "Cashier already exists" });
-  }
+  const existingIndex = users.findIndex(u => u.username === "cashier");
+
+if (existingIndex !== -1) {
+  users.splice(existingIndex, 1);
+}
 
   const credentials = hashPassword("Cashier123!");
 
